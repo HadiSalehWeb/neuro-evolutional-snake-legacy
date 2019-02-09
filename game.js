@@ -15,15 +15,17 @@ const Game = function (options) {
     options = Object.assign({
         size: new Vector2(512, 512),
         unitSize: 16,
-        unitFrameSize: 2
+        unitFrameSize: 2,
+        killOnLoop: false,
+        recordHistory: false
     }, options);
 
-    if (options.size.x < 0 || options.size.y < 0 || options.unitSize < 0 || options.unitFrameSize < 0)
-        throw new Error('all measures must be positive.');
+    if (options.size.x <= 0 || options.size.y <= 0 || options.unitSize <= 0 || options.unitFrameSize <= 0)
+        throw new Error('all measures must be positive and non-zero.');
     if (options.size.x % options.unitSize !== 0 || options.size.y % options.unitSize !== 0)
         throw new Error('width and height must be multiples of unitSize.');
     if (options.unitFrameSize >= options.unitSize * .5)
-        throw new Error('unitFrameSize can\'t be greater than or equal to half the unitSize.');
+        throw new Error('unitFrameSize must be smaller than half the unitSize.');
 
     Object.assign(this, options);
     this.history = [];
@@ -36,7 +38,7 @@ const Game = function (options) {
             units.x - Math.floor(units.x * 0.25),
             Math.floor(units.y * 0.25),
             units.y - Math.floor(units.y * 0.25)
-        ),
+        ).floor(),
         body: [],
         direction:
             Math.random() < .5 ? Math.random() < .5 ? Vector2.right
@@ -56,6 +58,29 @@ const Game = function (options) {
                     this.body[i] = this.body[i - 1].clone();
             }
             this.head = this.head.add(this.direction);
+        },
+        willDie: function () {
+            const newHead = this.head.add(this.direction);
+            return snake.body.slice(0, this.body.length - 1).some(x => x.equals(newHead)) ||
+                newHead.x < 0 ||
+                newHead.x > units.x - 1 ||
+                newHead.y < 0 ||
+                newHead.y > units.y - 1;
+        },
+        //loopHistory[snakeDir][palletPos][headPos][...bodyPositionS]
+        loopHistory: {},
+        checkLoop: function (pallet) {
+            const arr = [this.direction.hash(), pallet.hash(), this.head.hash(), ...this.body.map(x => x.hash())];
+            let found = true;
+            let obj = this.loopHistory;
+            for (let i = 0; i < arr.length; i++) {
+                if (!obj.hasOwnProperty(arr[i])) {
+                    found = false;
+                    obj[arr[i]] = {};
+                }
+                obj = obj[arr[i]];
+            }
+            return found;
         }
     };
     this.snake = snake;
@@ -70,9 +95,9 @@ const Game = function (options) {
     const getRandomPalletPosition = function () {
         if (snake.body.length + 1 >= (options.size.x) * (options.size.y))
             throw new Error('holy shit dude');
-        let ret = Vector2.random(0, units.x, 0, units.y);
+        let ret = Vector2.random(0, units.x, 0, units.y).floor();
         while (snake.body.some(x => x.equals(ret)) || snake.head.equals(ret))
-            ret = Vector2.random(0, units.x, 0, units.y);
+            ret = Vector2.random(0, units.x, 0, units.y).floor();
         return ret;
     };
 
@@ -85,20 +110,21 @@ const Game = function (options) {
         if (lastDirection !== null)
             snake.direction = lastDirection;
 
+        if (snake.willDie() || (this.killOnLoop && snake.checkLoop(this.pallet))) {
+            snake.alive = false;//womp womp
+
+            if (this.recordHistory)
+                this.history.push(new GameSnapshot(snake.head.add(snake.direction), snake.direction, snake.alive, snake.body.length + 1, this.pallet));
+            return;
+        }
+
         if (snake.head.equals(this.pallet)) {
             snake.move(true);
             this.pallet = getRandomPalletPosition();
         }
         else snake.move();
 
-        if (snake.body.some(x => x.equals(snake.head)) ||
-            snake.head.x < 0 ||
-            snake.head.x > units.x - 1 ||
-            snake.head.y < 0 ||
-            snake.head.y > units.y - 1) {
-            snake.alive = false;
-        }
-
-        this.history.push(new GameSnapshot(snake.head, snake.direction, snake.alive, snake.body.length + 1, this.pallet));
+        if (this.recordHistory)
+            this.history.push(new GameSnapshot(snake.head, snake.direction, snake.alive, snake.body.length + 1, this.pallet));
     }
 };

@@ -1,3 +1,5 @@
+//LEGACY
+
 "use strict";
 
 const unitSize = 16;
