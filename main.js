@@ -1,3 +1,4 @@
+/// <reference path="genetic.js" />
 'use strict';
 
 /*
@@ -9,6 +10,21 @@ window.onload = function () {
     const mainDiv = document.querySelector('main');
     let population = 50;
     let games, canvases, snakeNetworks;
+
+    const evolve = function () {
+        const chromosomes = snakeNetworks.map((n, i) => new Chromosome(n.encode(), /*games[i].snake.hasLooped ? 0 :*/ games[i].snake.score));
+        const evolved = mutate(chromosomes, {
+            mutationSkip: 4,
+            mutationRate: 0.05,
+            mutationRange: [-10, 10]
+        }, () => new SnakeNetwork().encode());
+
+        for (let i = 0; i < games.length; i++)
+            games[i].reset();
+
+        snakeNetworks = range(population).map(i => new SnakeNetwork(NeuralNetwork.decode(evolved[i].genes).weights));
+        // console.log(...evolved.map(x => x.fitness));
+    }
 
     const options = {
         running: false,
@@ -28,13 +44,11 @@ window.onload = function () {
             }
 
             if (games.every(g => !g.snake.alive)) {
+                evolve();
                 if (this.currentTask !== 2) {
                     this.currentTask = 0;
                     this.running = false;
                     return;
-                }
-                else {
-
                 }
             }
 
@@ -73,6 +87,8 @@ window.onload = function () {
             population: 50,
             canvasWidth: 128,
             canvasHeight: 128,
+            unitSize: 8,
+            unitFrameSize: 2,
 
             Create: function () {
                 options['⏹']();
@@ -81,11 +97,17 @@ window.onload = function () {
                     for (let i = 0; i < canvases.length; i++)
                         canvases[i].remove();
                 }
-                
+
                 population = this.population;
-                games = range(population).map(_ => new Game({ size: new Vector2(this.canvasWidth, this.canvasHeight), killOnLoop: true }));
+                games = range(population).map(_ => new Game({
+                    size: new Vector2(this.canvasWidth, this.canvasHeight),
+                    killOnLoop: true,
+                    unitSize: this.unitSize,
+                    unitFrameSize: this.unitFrameSize,
+                }));
                 canvases = range(population).map(i => new GameCanvas(games[i], mainDiv));
                 snakeNetworks = range(population).map(_ => new SnakeNetwork());
+                window.shit = { games, canvases, snakeNetworks };//Remove later
 
                 newSimulationFolder.close();
             }
@@ -96,7 +118,7 @@ window.onload = function () {
     gui.add(options, '⏵');
     gui.add(options, '⏸');
     gui.add(options, '⏹');
-    gui.add(options, 'fps').min(0).max(60);
+    gui.add(options, 'fps').min(0);//.max(100);
     gui.add(options, 'Run1');
     gui.add(options, 'RunMany');
     gui.add(options, 'Save');
@@ -106,5 +128,7 @@ window.onload = function () {
     newSimulationFolder.add(options.NewSimulation, 'population').min(0).step(1).max(200);
     newSimulationFolder.add(options.NewSimulation, 'canvasWidth').min(0).step(1).max(256);
     newSimulationFolder.add(options.NewSimulation, 'canvasHeight').min(0).step(1).max(256);
+    newSimulationFolder.add(options.NewSimulation, 'unitSize').min(0).step(1).max(256);
+    newSimulationFolder.add(options.NewSimulation, 'unitFrameSize').min(0).step(1).max(256);
     newSimulationFolder.add(options.NewSimulation, 'Create');
 };

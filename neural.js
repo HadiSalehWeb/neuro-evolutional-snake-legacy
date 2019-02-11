@@ -52,7 +52,7 @@ NeuralNetwork.prototype.encode = function () {
     for (let c = 0; c < this.layerCount - 1; c++)
         for (let i = 0; i < this.weights[c].length; i++)
             for (let j = 0; j < this.weights[c][i].length; j++)
-                ret.push(net.weights[c][i][j]);
+                ret.push(this.weights[c][i][j]);
 
     return ret;
 }

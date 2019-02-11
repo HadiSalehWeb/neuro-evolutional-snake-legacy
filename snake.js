@@ -1,7 +1,7 @@
 "use strict";
 
 const SnakeNetwork = function (weights) {
-    NeuralNetwork.call(this, [15, 20, 3], weights);
+    NeuralNetwork.call(this, [15, 4, 3], weights);
 }
 
 Object.assign(SnakeNetwork.prototype, NeuralNetwork.prototype);
@@ -36,17 +36,17 @@ SnakeNetwork.getInputs = function (game) {
     const dir = lookingDirections(game.snake.direction);
 
     for (let i = 0; i < 5; i++) {
-        for (let pos = game.snake.head.add(dir[i]); ; pos = pos.add(dir[i])) {
+        for (let pos = game.snake.head.add(dir[i]), j = 0; ; pos = pos.add(dir[i]), j++) {
             if (game.pallet.equals(pos)) {
-                input.push(1, 0, 0);//pallet
+                input.push(j / unitSize.x, 0, 0);//pallet
                 break;
             }
             if (game.snake.body.some(x => x.equals(pos))) {
-                input.push(0, 1, 0);//snake
+                input.push(0, j / unitSize.x, 0);//snake
                 break;
             }
             if (pos.x < 0 || pos.x > unitSize.x - 1 || pos.y < 0 || pos.y > unitSize.y - 1) {
-                input.push(0, 0, 1);//wall
+                input.push(0, 0, j / unitSize.x);//wall
                 break;
             }
         }

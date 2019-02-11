@@ -81,7 +81,9 @@ const Game = function (options) {
                 obj = obj[arr[i]];
             }
             return found;
-        }
+        },
+        hasLooped: false,
+        score: 0,
     };
     this.snake = snake;
 
@@ -110,8 +112,11 @@ const Game = function (options) {
         if (lastDirection !== null)
             snake.direction = lastDirection;
 
-        if (snake.willDie() || (this.killOnLoop && snake.checkLoop(this.pallet))) {
+        const hasLooped = (this.killOnLoop && snake.checkLoop(this.pallet));
+        if (snake.willDie() || hasLooped) {
             snake.alive = false;//womp womp
+            snake.hasLooped = hasLooped;
+            // if (hasLooped) snake.score -= 10;
 
             if (this.recordHistory)
                 this.history.push(new GameSnapshot(snake.head.add(snake.direction), snake.direction, snake.alive, snake.body.length + 1, this.pallet));
@@ -119,12 +124,36 @@ const Game = function (options) {
         }
 
         if (snake.head.equals(this.pallet)) {
+            snake.score += 10;
             snake.move(true);
             this.pallet = getRandomPalletPosition();
         }
-        else snake.move();
+        else {
+            if (snake.direction.dot(this.pallet.substract(snake.head)) > 0) snake.score++;
+            else snake.score -= 1.5;
+            snake.move();
+        }
 
         if (this.recordHistory)
             this.history.push(new GameSnapshot(snake.head, snake.direction, snake.alive, snake.body.length + 1, this.pallet));
+    }
+
+    this.reset = function () {
+        snake.alive = true;
+        snake.head = Vector2.random(
+            Math.floor(units.x * 0.25),
+            units.x - Math.floor(units.x * 0.25),
+            Math.floor(units.y * 0.25),
+            units.y - Math.floor(units.y * 0.25)
+        ).floor();
+        snake.body = [];
+        snake.direction =
+            Math.random() < .5 ? Math.random() < .5 ? Vector2.right
+                : Vector2.left
+                : Math.random() < .5 ? Vector2.up
+                    : Vector2.down;
+        snake.loopHistory = {};
+        snake.score = 0;
+        this.pallet = getRandomPalletPosition();
     }
 };

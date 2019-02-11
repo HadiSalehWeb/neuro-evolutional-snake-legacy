@@ -37,6 +37,12 @@ Vector2.prototype.floor = function () {
 Vector2.prototype.add = function (v) {
     return new Vector2(this.x + v.x, this.y + v.y);
 };
+Vector2.prototype.substract = function(v){
+    return new Vector2(this.x - v.x, this.y - v.y);
+}
+Vector2.prototype.dot = function (v) {
+    return this.x * v.x + this.y * v.y;
+}
 Vector2.prototype.clone = function (v) {
     return new Vector2(this.x, this.y);
 };
@@ -52,6 +58,6 @@ Vector2.prototype.perpendicularTo = function (v) {
 Vector2.prototype.rotate = function (angle) {
     return Vector2.fromColumnVector(multiply(rotationMatrix2d(angle), this.toColumnVector()));
 };
-Vector2.prototype.hash = function(){
+Vector2.prototype.hash = function () {
     return this.x + 73856093 * this.y;
 };
