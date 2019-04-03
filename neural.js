@@ -12,8 +12,8 @@ const NeuralNetwork = function (layers, weights) {
     this.weights = weights || range(this.layerCount - 1).map(i =>
         range(this.layers[i + 1]).map(row =>
             range(this.layers[i] + 1).map(column =>
-                // randomWeightSqr(layers[i])
-                randomMinMax(-1, 1)
+                randomWeightSqr(layers[i])
+                //randomMinMax(-1, 1)
             )
         )
     );

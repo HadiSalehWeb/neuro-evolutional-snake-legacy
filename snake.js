@@ -1,5 +1,31 @@
 "use strict";
 
+const Snake = function (alive, head, body, direction, network, score) {
+    this.alive = alive !== undefined ? alive : true;
+    this.head = head || Vector2.zero;
+    this.body = body || [];
+    this.direction = direction || Direction.random();
+    this.network = network || new SnakeNetwork();
+    this.score = score || 0;
+}
+
+Snake.prototype.move = function (grow) {
+    if (!grow)
+        this.body.pop();
+
+    this.body.unshift(this.direction.reverse());
+    this.head = this.direction.moveVector(this.head);
+}
+
+Snake.prototype.willDie = function (bounds) {
+    const newHead = this.direction.moveVector(this.head);
+    return this.body.slice(0, this.body.length - 1).some(x => x.equals(newHead)) ||
+        newHead.x < 0 ||
+        newHead.x > bounds.x - 1 ||
+        newHead.y < 0 ||
+        newHead.y > bounds.y - 1;
+}
+
 const SnakeNetwork = function (weights) {
     NeuralNetwork.call(this, [15, 4, 3], weights);
 }

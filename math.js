@@ -9,7 +9,7 @@ const randomRange = (start, range) => Math.random() * range + start;
 const randomMinMax = (min, max) => randomRange(min, max - min);
 const randomWeightSqr = inputCount => {
     const max = 1 / Math.sqrt(inputCount);
-    return randomMinMax(-max, -max);
+    return randomMinMax(-max, max);
 };
 
 const rotationMatrix2d = angle => {

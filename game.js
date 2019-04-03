@@ -28,6 +28,7 @@ const Game = function (options) {
         throw new Error('unitFrameSize must be smaller than half the unitSize.');
 
     Object.assign(this, options);
+
     this.history = [];
     const units = new Vector2(this.size.x / this.unitSize, this.size.y / this.unitSize);
 
